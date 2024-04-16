@@ -1,3 +1,7 @@
+import random
+import time
+
+
 class Piece:
     def __init__(self, color):
         self.color = color
@@ -24,27 +28,7 @@ class Pawn(Piece):
         self.direction = -1 if color == 'white' else 1  # Kierunek poruszania się pionka
 
     def get_available_moves(self, board):
-        available_moves = []
-        current_row, current_col = self.get_position()
-
-        # Sprawdź ruch do przodu o jedno pole
-        if board[current_row + self.direction][current_col] == '.':
-            available_moves.append((current_row + self.direction, current_col))
-
-            # Sprawdź ruch o dwa pola, jeśli pionek znajduje się na swoim wierszu startowym i pole bezpośrednio przed nim jest puste
-            if current_row == self.starting_row and board[current_row + 2 * self.direction][current_col] == '.':
-                available_moves.append((current_row + 2 * self.direction, current_col))
-
-        # Sprawdź możliwe bicia w skos
-        for col_offset in [-1, 1]:
-            target_row = current_row + self.direction
-            target_col = current_col + col_offset
-            if 0 <= target_row < 8 and 0 <= target_col < 8:
-                target_piece = board[target_row][target_col]
-                if target_piece != '.' and target_piece.get_color() != self.color:
-                    available_moves.append((target_row, target_col))
-
-        return available_moves
+        pass
 
 
 # Wieża
@@ -109,6 +93,21 @@ class ChessBoard:
         for row in self.board:
             print(" ".join(row))
 
+    def move_piece(self, start_pos, end_pos):
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+
+        piece = self.board[start_row][start_col]  # Pobierz figurę z pozycji początkowej
+        self.board[start_row][start_col] = '.'  # Usuń figurę z pozycji początkowej
+        self.board[end_row][end_col] = piece  # Umieść figurę na nowej pozycji
+
+    def print_piece_positions(self):
+        for i in range(8):
+            for j in range(8):
+                piece = self.board[i][j]
+                if piece != '.':
+                    print(f"Figura {piece} jest na pozycji ({i}, {j})")
+
 
 # Przypisanie koloru i instancji do figur
 p = Pawn("black")
@@ -121,3 +120,21 @@ q = Queen("black")
 Q = Queen("white")
 k = King("black")
 K = King("white")
+
+
+# Utwórz instancję szachownicy
+chess_board = ChessBoard()
+
+# Wyświetl planszę przed ruchem
+print("Plansza przed ruchem:")
+chess_board.display()
+# wyświetl pozycję każdego pionka na planszy
+chess_board.print_piece_positions()
+# # Wykonaj ruch pionka z pozycji (6, 0) do (5, 0)
+# start_position = (6, 0)
+# end_position = (5, 0)
+# chess_board.move_piece(start_position, end_position)
+#
+# # Wyświetl planszę po ruchu
+# print("\nPlansza po ruchu:")
+# chess_board.display()
