@@ -3,7 +3,23 @@ import os
 import pygame
 import Chess_pygame_configfile as config
 
+class Piece(pygame.sprite.Sprite):
+    def __init__ (self, position, piece_color, piece_type, piece_x_size = 100, piece_y_size = 100):
+        super().__init__()
+        self.piece_type = piece_type
+        self.position = position
+        self.piece_color = piece_color
 
+        piece_image_path = "images/pieces/" + self.piece_color + "/" + self.piece_type + ".png"
+        self.image = pygame.image.load(piece_image_path)
+        self.image = pygame.transform.scale(self.image, (piece_x_size, piece_y_size))
+
+        self.image.set_colorkey((34, 177, 76))
+
+        self.rect = self.image.get_rect(center=self.position)
+
+    def set_position(self, position):
+        position = self.position
 
 
 class ChessApplication(tk.Frame):
@@ -11,38 +27,33 @@ class ChessApplication(tk.Frame):
         tk.Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
 
+        # inicjalizacja pygame i tworzenie okna
         os.environ['SDL_WINDOWID'] = str(self.winfo_id())
         pygame.display.init()
         self.window_size = (self.winfo_reqwidth(), self.winfo_reqheight())
         self.screen = pygame.display.set_mode(self.window_size)
-        #inicjalizacja pygame i tworzenie okna
 
-        #zmienne potrzebne do gry
-        self.turn = 'white'
-        self.board = [
-            ['r', 'h', 'b', 'q', 'k', 'b', 'h', 'r'],
-            ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['.', '.', '.', '.', '.', '.', '.', '.'],
-            ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
-            ['R', 'H', 'B', 'Q', 'K', 'B', 'H', 'R']
-        ]
 
         self.field_coords = []
-
+        #wyliczanie szachownicy dla zadanej rozdzielczości
         self.create_chessboard()
 
 
         self.pygame_loop()
 
     def pygame_loop(self):
+        #ustaw kolor tła na niebieski
         self.screen.fill((0, 0, 255))
+        #rysuj szachownice
         self.draw_chessboard()
+        #rysuj pionki
+        self.draw_pieces()
 
         pygame.display.flip()
         self.after(1, self.pygame_loop)
+
+    def draw_pieces(self):
+
 
     def create_chessboard(self):
         field_size = (int(self.window_size[0]/8), int(self.window_size[1]/8))
