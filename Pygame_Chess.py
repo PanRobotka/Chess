@@ -25,6 +25,16 @@ piece_font = pygame.font.SysFont(None, 60)  # Wybierz odpowiedni rozmiar czcionk
 screen = pygame.display.set_mode(WINDOW_SIZE)
 pygame.display.set_caption("Szachy")
 
+# Definiowanie przycisków dla Menu (GUI)
+start_text = font.render("Start Game", True, BLACK)
+start_rect = start_text.get_rect(center=(WIDTH // 2, HEIGHT // 3))
+
+quit_text = font.render("Quit Game", True, BLACK)
+quit_rect = quit_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+
+# Zmienna śledząca stan gry (czy gra została już uruchomiona)
+game_started = False
+
 # Figury na planszy
 chess_board = ChessBoard()
 
@@ -58,7 +68,13 @@ clock = pygame.time.Clock()
 running = True
 while running:
     screen.fill(GRAY)
-    draw_board()
+
+    if not game_started:  # Jeśli gra nie została jeszcze uruchomiona, wyświetl menu
+        # Narysuj przyciski
+        screen.blit(start_text, start_rect)
+        screen.blit(quit_text, quit_rect)
+    else:  # Jeśli gra została uruchomiona, wyświetl planszę szachową
+        draw_board()
 
     # Obsługa zdarzeń
     for event in pygame.event.get():
@@ -66,18 +82,21 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
-            row = int((y - MARGIN) // (BOARD_SIZE / 8))
-            col = int((x - MARGIN) // (BOARD_SIZE / 8))
-            if selected_piece is None:
-                selected_piece = (row, col)
-            else:
-                start_position = selected_piece
-                end_position = (row, col)
-                chess_board.move_piece(start_position, end_position)
-                selected_piece = None
-                # W TYM MIEJSCU MOŻESZ ZOBACZYĆ INTERAKCJĘ NA ŻYWO ZACHODZĄCĄ W KODZIE CHESS.PY ;)
-                # chess_board.print_piece_positions()  # Wywołanie funkcji print_piece_positions()
-                # chess_board.display()  # Wywołanie funkcji display()
+            if not game_started:  # Jeśli gra nie została jeszcze uruchomiona, obsłuż kliknięcia na przyciskach
+                if start_rect.collidepoint(x, y):  # Kliknięto przycisk "Start Game"
+                    game_started = True
+                elif quit_rect.collidepoint(x, y):  # Kliknięto przycisk "Quit Game"
+                    running = False
+            else:  # Jeśli gra została uruchomiona, obsłuż kliknięcia na planszy
+                row = int((y - MARGIN) // (BOARD_SIZE / 8))
+                col = int((x - MARGIN) // (BOARD_SIZE / 8))
+                if selected_piece is None:
+                    selected_piece = (row, col)
+                else:
+                    start_position = selected_piece
+                    end_position = (row, col)
+                    chess_board.move_piece(start_position, end_position)
+                    selected_piece = None
 
     pygame.display.flip()
     clock.tick(FPS)
