@@ -23,6 +23,14 @@ class Piece:
     def __str__(self):
         return self.id
 
+    def capture_piece(self, board, position):
+        target_piece = board[position[0]][position[1]]
+        if isinstance(target_piece, Piece):
+            print(
+                f"Figura {self.__class__.__name__} o kolorze {self.get_color()} zbiła figurę {target_piece.__class__.__name__} o kolorze {target_piece.get_color()}")
+            # Usuń zbitą figurę z planszy
+            board[position[0]][position[1]] = '.'
+
 
 # Pionek
 class Pawn(Piece):
@@ -103,8 +111,15 @@ class ChessBoard:
         end_row, end_col = end_pos
 
         piece = self.board[start_row][start_col]  # Pobierz figurę z pozycji początkowej
+        ########## Prosty if który sprawdza czy na polu na  które chcesz stanąć nie stoi żadna figura, jeżeli stoi to ją bije ##########
+        if isinstance(self.board[end_row][end_col], Piece):
+            piece.capture_piece(self.board, end_pos)
+
         self.board[start_row][start_col] = '.'  # Usuń figurę z pozycji początkowej
         self.board[end_row][end_col] = piece  # Umieść figurę na nowej pozycji
+
+        # Aktualizacja pozycji figury ( potrzebne do śledzenia figury po ruchu)
+        piece.set_position((end_row, end_col))
 
     def assign_pieces(self):
         for i in range(8):
@@ -150,16 +165,22 @@ chess_board.display()
 # wyświetl pozycję każdego pionka na planszy
 # chess_board.print_piece_positions()
 # w taki sposób odwołujesz się do nowo stworzonych instancji. Poniżej przykładowy kod gdzie szukasz informacji o figurze położonej na współrzędnych 0,0
-piece_at_0_0 = chess_board.board[0][0]
-print(piece_at_0_0)
+# piece_at_0_0 = chess_board.board[0][0]
+# print(piece_at_0_0)
 ########################################################################################################################
-                                            # Kod nie używany, ale działa ;)
+# Kod nie używany, ale działa ;)
 ########################################################################################################################
-# # Wykonaj ruch pionka z pozycji (6, 0) do (5, 0)
-# start_position = (6, 0)
-# end_position = (5, 0)
-# chess_board.move_piece(start_position, end_position)
-#
+###### TESTUJE TUTAJ ZBIJANIE PIONKA NA PODSTAWIE WEJŚCIU W NIEGO ORAZ SPRAWDZAM CZY RUCH ZOSTAŁ Z AKTUALIZOWANY ###### !!!!!!!!! WAŻNE
+# Wykonaj ruch pionka z pozycji (6, 0) do (1, 0)
+start_position = (6, 0)
+end_position = (1, 0)
+chess_board.move_piece(start_position, end_position)
 # Wyświetl planszę po ruchu
-# print("\nPlansza po ruchu:")
-# chess_board.display()
+print("\nPlansza po ruchu:")
+chess_board.display()
+start_position = (1, 0)
+end_position = (2, 0)
+chess_board.move_piece(start_position, end_position)
+print("\nPlansza po ruchu:")
+chess_board.display()
+chess_board.print_piece_positions()
