@@ -127,19 +127,21 @@ class ChessBoard:
             print(" ".join(str(piece) for piece in row))
 
     def move_piece(self, start_pos, end_pos):
+        print('move piece')
         start_row, start_col = start_pos
         end_row, end_col = end_pos
 
         piece = self.board[start_row][start_col]  # Pobierz figurę z pozycji początkowej
         ########## Prosty if który sprawdza czy na polu na  które chcesz stanąć nie stoi żadna figura, jeżeli stoi to ją bije ##########
         if isinstance(self.board[end_row][end_col], Piece):
+            print('piece type', type(piece), piece)
             piece.capture_piece(self.board, end_pos)
 
         self.board[start_row][start_col] = '.'  # Usuń figurę z pozycji początkowej
         self.board[end_row][end_col] = piece  # Umieść figurę na nowej pozycji
 
         # Aktualizacja pozycji figury ( potrzebne do śledzenia figury po ruchu)
-        piece.set_position((end_row, end_col))
+        #piece.set_position((end_row, end_col))
 
     def assign_pieces(self):
         for i in range(8):
@@ -174,6 +176,7 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
+
 
 # Utwórz instancję szachownicy
 # chess_board = ChessBoard()
