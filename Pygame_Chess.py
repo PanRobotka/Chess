@@ -1,5 +1,5 @@
 import pygame
-from Chess import ChessBoard, Piece
+from Chess import ChessBoard, Piece, Pawn
 
 # Inicjalizacja Pygame
 pygame.init()
@@ -55,9 +55,18 @@ def draw_board():
                 text = font.render(str(row + 1), True, RED)  # Cyfry od 1 do 8
                 screen.blit(text, (col * BOARD_SIZE / 8 + 5, MARGIN + row * BOARD_SIZE / 8 + 20))
 
-            # Dodaj figury na planszę
+            # Sprawdź, czy pole na planszy jest instancją klasy Piece
             piece = chess_board.board[row][col]
-            if isinstance(piece, Piece):  # Sprawdź, czy pole na planszy jest instancją klasy Piece
+            if isinstance(piece, Pawn) and selected_piece == (row, col):
+                available_moves = piece.get_available_moves(chess_board.board)
+                for move in available_moves:
+                    r, c = move
+                    pygame.draw.rect(screen, (0, 255, 0), (
+                        MARGIN + c * BOARD_SIZE / 8, MARGIN + r * BOARD_SIZE / 8, BOARD_SIZE / 8,
+                        BOARD_SIZE / 8), 3)
+
+            # Dodaj figury na planszę
+            if isinstance(piece, Piece):
                 text = piece_font.render(piece.id, True, RED)
                 screen.blit(text, (MARGIN + col * BOARD_SIZE / 8 + 20, MARGIN + row * BOARD_SIZE / 8 + 20))
 
@@ -69,11 +78,10 @@ running = True
 while running:
     screen.fill(GRAY)
 
-    if not game_started:  # Jeśli gra nie została jeszcze uruchomiona, wyświetl menu
-        # Narysuj przyciski
+    if not game_started:
         screen.blit(start_text, start_rect)
         screen.blit(quit_text, quit_rect)
-    else:  # Jeśli gra została uruchomiona, wyświetl planszę szachową
+    else:
         draw_board()
 
     # Obsługa zdarzeń
@@ -82,20 +90,33 @@ while running:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pygame.mouse.get_pos()
-            if not game_started:  # Jeśli gra nie została jeszcze uruchomiona, obsłuż kliknięcia na przyciskach
-                if start_rect.collidepoint(x, y):  # Kliknięto przycisk "Start Game"
+            if not game_started:
+                if start_rect.collidepoint(x, y):
                     game_started = True
-                elif quit_rect.collidepoint(x, y):  # Kliknięto przycisk "Quit Game"
+                elif quit_rect.collidepoint(x, y):
                     running = False
-            else:  # Jeśli gra została uruchomiona, obsłuż kliknięcia na planszy
+            else:
                 row = int((y - MARGIN) // (BOARD_SIZE / 8))
                 col = int((x - MARGIN) // (BOARD_SIZE / 8))
                 if selected_piece is None:
+                    # Jeśli kliknięto na pole z figurą, wyświetl jej nazwę
+                    piece = chess_board.board[row][col]
+                    if isinstance(piece, Piece):
+                        print(
+                            f"Kliknięto na figurę: {piece.__class__.__name__}, Kolor: {piece.get_color()}, ID: {piece.id}")
                     selected_piece = (row, col)
+                    print(f"selected_piece: {selected_piece}")  # Dodaj to w celu sprawdzenia wartości selected_piece
                 else:
                     start_position = selected_piece
                     end_position = (row, col)
                     chess_board.move_piece(start_position, end_position)
+                    if isinstance(piece, Pawn) and not piece.move_made:
+                        piece.move()  # Oznacz ruch jako wykonany
+                        print(
+                            f"Ruch wykonany przez pionka: {piece.__class__.__name__}, Kolor: {piece.get_color()}, ID: {piece.id} ",
+                            {piece.move_made})
+                    # chess_board.display()
+                    #chess_board.print_piece_positions()
                     selected_piece = None
 
     pygame.display.flip()

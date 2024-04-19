@@ -36,11 +36,31 @@ class Piece:
 class Pawn(Piece):
     def __init__(self, color, id):
         super().__init__(color, id)
-        self.starting_row = 1 if color == 'white' else 6  # Wiersz, z którego pionek może ruszyć o dwa pola
-        self.direction = -1 if color == 'white' else 1  # Kierunek poruszania się pionka
+        self.direction = -1 if color == 'white' else 1
+        # self.starting_row = 1 if color == 'black' else 6
+        self.move_made = False
 
     def get_available_moves(self, board):
-        pass
+        available_moves = []
+        current_row, current_col = self.position
+
+        # Sprawdź możliwe ruchy dla piona w zależności od jego kierunku i czy wykonano już ruch
+        if not self.move_made:
+            # Możliwe ruchy gdy pion nie wykonał jeszcze ruchu
+            if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
+                available_moves.append((current_row + self.direction, current_col))
+                if board[current_row + 2 * self.direction][current_col] == '.':
+                    available_moves.append((current_row + 2 * self.direction, current_col))
+        else:
+            # Możliwy ruch gdy pion już wykonał ruch
+            if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
+                available_moves.append((current_row + self.direction, current_col))
+
+        return available_moves
+
+    def move(self):
+        self.move_made = True
+
 
 
 # Wieża
@@ -155,13 +175,12 @@ class ChessBoard:
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
 
-
 # Utwórz instancję szachownicy
-chess_board = ChessBoard()
+# chess_board = ChessBoard()
 
 # Wyświetl planszę przed ruchem
-print("Plansza przed ruchem:")
-chess_board.display()
+# print("Plansza przed ruchem:")
+# chess_board.display()
 # wyświetl pozycję każdego pionka na planszy
 # chess_board.print_piece_positions()
 # w taki sposób odwołujesz się do nowo stworzonych instancji. Poniżej przykładowy kod gdzie szukasz informacji o figurze położonej na współrzędnych 0,0
@@ -172,15 +191,15 @@ chess_board.display()
 ########################################################################################################################
 ###### TESTUJE TUTAJ ZBIJANIE PIONKA NA PODSTAWIE WEJŚCIU W NIEGO ORAZ SPRAWDZAM CZY RUCH ZOSTAŁ Z AKTUALIZOWANY ###### !!!!!!!!! WAŻNE
 # Wykonaj ruch pionka z pozycji (6, 0) do (1, 0)
-start_position = (6, 0)
-end_position = (1, 0)
-chess_board.move_piece(start_position, end_position)
+# start_position = (6, 0)
+# end_position = (1, 0)
+# chess_board.move_piece(start_position, end_position)
 # Wyświetl planszę po ruchu
-print("\nPlansza po ruchu:")
-chess_board.display()
-start_position = (1, 0)
-end_position = (2, 0)
-chess_board.move_piece(start_position, end_position)
-print("\nPlansza po ruchu:")
-chess_board.display()
-chess_board.print_piece_positions()
+# print("\nPlansza po ruchu:")
+# chess_board.display()
+# start_position = (1, 0)
+# end_position = (2, 0)
+# chess_board.move_piece(start_position, end_position)
+# print("\nPlansza po ruchu:")
+# chess_board.display()
+# chess_board.print_piece_positions()
