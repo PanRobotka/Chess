@@ -59,6 +59,7 @@ def draw_board():
             piece = chess_board.board[row][col]
             if isinstance(piece, Pawn) and selected_piece == (row, col):
                 available_moves = piece.get_available_moves(chess_board.board)
+                print(available_moves)
                 for move in available_moves:
                     r, c = move
                     pygame.draw.rect(screen, (0, 255, 0), (

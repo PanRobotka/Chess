@@ -62,7 +62,6 @@ class Pawn(Piece):
         self.move_made = True
 
 
-
 # Wieża
 class Rook(Piece):
     def __init__(self, color, id):
@@ -127,7 +126,7 @@ class ChessBoard:
             print(" ".join(str(piece) for piece in row))
 
     def move_piece(self, start_pos, end_pos):
-        print('move piece')
+        # print('move piece')
         start_row, start_col = start_pos
         end_row, end_col = end_pos
 
@@ -141,7 +140,7 @@ class ChessBoard:
         self.board[end_row][end_col] = piece  # Umieść figurę na nowej pozycji
 
         # Aktualizacja pozycji figury ( potrzebne do śledzenia figury po ruchu)
-        #piece.set_position((end_row, end_col))
+        piece.set_position((end_row, end_col))
 
     def assign_pieces(self):
         for i in range(8):
@@ -176,7 +175,6 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
-
 
 # Utwórz instancję szachownicy
 # chess_board = ChessBoard()

@@ -1,8 +1,9 @@
 import pygame
 from Chess import ChessBoard, Piece, Pawn
 
+
 class Chess_app:
-    def __init__(self, board_size = 800, margin = 50):
+    def __init__(self, board_size=800, margin=50):
         self.board_size = board_size
         self.margin = margin
 
@@ -18,7 +19,7 @@ class Chess_app:
 
         self.screen = pygame.display.set_mode(window_size)
 
-        #kolory
+        # kolory
         self.white = (255, 255, 255)
         self.black = (0, 0, 0)
         self.gray = (200, 200, 200)
@@ -51,8 +52,7 @@ class Chess_app:
             else:
                 self.draw_board()
                 if self.selected_piece is not None:
-                    self.draw_alvalible_moves()
-
+                    self.draw_available_moves(self.selected_piece)
 
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -89,32 +89,36 @@ class Chess_app:
                                 f"ID: {self.selected_piece.id} ",
                                 {self.selected_piece.move_made})
                         self.selected_piece = None
+                        # Po wykonaniu ruchu, narysuj dostępne ruchy dla wybranej figury
+                        if isinstance(self.selected_piece, Piece):
+                            self.draw_available_moves(self.selected_piece)
 
-    def draw_alvalible_moves(self):
-        piece = self.selected_piece
-        if isinstance(piece, Pawn):
-            available_moves = piece.get_available_moves(self.chess_board.board)
-            for move in available_moves:
-                r, c = move
-                pygame.draw.rect(self.screen, (0, 255, 0), (
-                    self.margin + c * self.board_size / 8, self.margin + r * self.board_size / 8,
-                    self.board_size / 8,
-                    self.board_size / 8), 3)
+    def draw_available_moves(self, piece):
+        available_moves = piece.get_available_moves(self.chess_board.board)
+        for move in available_moves:
+            r, c = move
+            pygame.draw.rect(self.screen, (0, 255, 0), (
+                self.margin + c * self.board_size / 8, self.margin + r * self.board_size / 8,
+                self.board_size / 8,
+                self.board_size / 8), 3)
 
     def draw_board(self):
         for row in range(8):
             for col in range(8):
                 color = self.white if (row + col) % 2 == 0 else self.black
                 pygame.draw.rect(self.screen, color, (
-                    self.margin + col * self.board_size / 8, self.margin + row * self.board_size / 8, self.board_size / 8, self.board_size / 8))
+                    self.margin + col * self.board_size / 8, self.margin + row * self.board_size / 8,
+                    self.board_size / 8, self.board_size / 8))
 
                 # Dodanie opisu pól
                 if row == 0:  # Dla górnej krawędzi planszy
                     text = self.font.render(chr(65 + col), True, self.red)  # ASCII kod dla liter od a do h
-                    self.screen.blit(text, (self.margin + col * self.board_size / 8 + 20, row * self.board_size / 8 + 5))
+                    self.screen.blit(text,
+                                     (self.margin + col * self.board_size / 8 + 20, row * self.board_size / 8 + 5))
                 if col == 0:  # Dla lewej krawędzi planszy
                     text = self.font.render(str(row + 1), True, self.red)  # Cyfry od 1 do 8
-                    self.screen.blit(text, (col * self.board_size / 8 + 5, self.margin + row * self.board_size / 8 + 20))
+                    self.screen.blit(text,
+                                     (col * self.board_size / 8 + 5, self.margin + row * self.board_size / 8 + 20))
 
                 # Sprawdź, czy pole na planszy jest instancją klasy Piece
                 piece = self.chess_board.board[row][col]
@@ -122,6 +126,8 @@ class Chess_app:
                 # Dodaj figury na planszę
                 if isinstance(piece, Piece):
                     text = self.piece_font.render(piece.id, True, self.red)
-                    self.screen.blit(text, (self.margin + col * self.board_size / 8 + 20, self.margin + row * self.board_size / 8 + 20))
+                    self.screen.blit(text, (
+                        self.margin + col * self.board_size / 8 + 20, self.margin + row * self.board_size / 8 + 20))
+
 
 Chess_app()
