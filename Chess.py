@@ -50,14 +50,26 @@ class Pawn(Piece):
                 available_moves.append((current_row + self.direction, current_col))
                 if board[current_row + 2 * self.direction][current_col] == '.':
                     available_moves.append((current_row + 2 * self.direction, current_col))
+            # Sprawdź możliwość zbijania pionka przeciwnika w lewo
+            if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
+                available_moves.append((current_row + self.direction, current_col - 1))
+            # Sprawdź możliwość zbijania pionka przeciwnika w prawo
+            if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
+                available_moves.append((current_row + self.direction, current_col + 1))
         else:
             # Możliwy ruch gdy pion już wykonał ruch
             if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
                 available_moves.append((current_row + self.direction, current_col))
+            # Sprawdź możliwość zbijania pionka przeciwnika w lewo
+            if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
+                available_moves.append((current_row + self.direction, current_col - 1))
+            # Sprawdź możliwość zbijania pionka przeciwnika w prawo
+            if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
+                available_moves.append((current_row + self.direction, current_col + 1))
 
         # Dodajemy warunek sprawdzający czy pionek porusza się w dobrym kierunku
-        return [(row, col) for row, col in available_moves if (row - current_row) / abs(row - current_row) == self.direction]
-
+        return [(row, col) for row, col in available_moves if
+                (row - current_row) / abs(row - current_row) == self.direction]
 
     def move(self):
         self.move_made = True

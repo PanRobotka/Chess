@@ -103,7 +103,11 @@ class Chess_app:
             available_moves = piece.get_available_moves(self.chess_board.board)
             for move in available_moves:
                 r, c = move
-                pygame.draw.rect(self.screen, (0, 255, 0), (
+                if self.chess_board.board[r][c] != '.':
+                    color = (255, 0, 0)  # Czerwony kolor dla zajętych pól
+                else:
+                    color = (0, 255, 0)  # Zielony kolor dla pustych pól
+                pygame.draw.rect(self.screen, color, (
                     self.margin + c * self.board_size / 8, self.margin + r * self.board_size / 8,
                     self.board_size / 8,
                     self.board_size / 8), 3)
