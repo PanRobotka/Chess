@@ -45,31 +45,39 @@ class Pawn(Piece):
 
         # Sprawdź możliwe ruchy dla piona w zależności od jego kierunku i czy wykonano już ruch
         if not self.move_made:
-            # Możliwe ruchy gdy pion nie wykonał jeszcze ruchu
-            if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
-                available_moves.append((current_row + self.direction, current_col))
-                if board[current_row + 2 * self.direction][current_col] == '.':
-                    available_moves.append((current_row + 2 * self.direction, current_col))
-            # Sprawdź możliwość zbijania pionka przeciwnika w lewo
-            if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
-                available_moves.append((current_row + self.direction, current_col - 1))
-            # Sprawdź możliwość zbijania pionka przeciwnika w prawo
-            if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
-                available_moves.append((current_row + self.direction, current_col + 1))
+            available_moves += self.check_initial_moves(board, current_row, current_col)
         else:
-            # Możliwy ruch gdy pion już wykonał ruch
-            if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
-                available_moves.append((current_row + self.direction, current_col))
-            # Sprawdź możliwość zbijania pionka przeciwnika w lewo
-            if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
-                available_moves.append((current_row + self.direction, current_col - 1))
-            # Sprawdź możliwość zbijania pionka przeciwnika w prawo
-            if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
-                available_moves.append((current_row + self.direction, current_col + 1))
+            available_moves += self.check_subsequent_moves(board, current_row, current_col)
 
         # Dodajemy warunek sprawdzający czy pionek porusza się w dobrym kierunku
         return [(row, col) for row, col in available_moves if
                 (row - current_row) / abs(row - current_row) == self.direction]
+
+    def check_initial_moves(self, board, current_row, current_col):
+        initial_moves = []
+        if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
+            initial_moves.append((current_row + self.direction, current_col))
+            if board[current_row + 2 * self.direction][current_col] == '.':
+                initial_moves.append((current_row + 2 * self.direction, current_col))
+        # Sprawdź możliwość zbijania pionka przeciwnika w lewo
+        if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
+            initial_moves.append((current_row + self.direction, current_col - 1))
+        # Sprawdź możliwość zbijania pionka przeciwnika w prawo
+        if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
+            initial_moves.append((current_row + self.direction, current_col + 1))
+        return initial_moves
+
+    def check_subsequent_moves(self, board, current_row, current_col):
+        subsequent_moves = []
+        if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
+            subsequent_moves.append((current_row + self.direction, current_col))
+        # Sprawdź możliwość zbijania pionka przeciwnika w lewo
+        if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
+            subsequent_moves.append((current_row + self.direction, current_col - 1))
+        # Sprawdź możliwość zbijania pionka przeciwnika w prawo
+        if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
+            subsequent_moves.append((current_row + self.direction, current_col + 1))
+        return subsequent_moves
 
     def move(self):
         self.move_made = True

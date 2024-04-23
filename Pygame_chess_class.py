@@ -9,7 +9,7 @@ class Chess_app:
 
         pygame.init()
         pygame.display.set_caption("Szachy")
-        self.font = pygame.font.SysFont(None, 30)  # Wybierz odpowiedni rozmiar czcionki
+        self.font = pygame.font.SysFont(None, 40)  # Wybierz odpowiedni rozmiar czcionki
         self.piece_font = pygame.font.SysFont(None, 60)  # Wybierz odpowiedni rozmiar czcionki dla figur
 
         width, height = self.board_size + 2 * self.margin, self.board_size + 2 * self.margin
@@ -37,6 +37,9 @@ class Chess_app:
         self.should_capture_mouse = False
 
         self.chess_board = ChessBoard()
+        # Zmienne do obsługi wyświetlania tekstu
+        self.invalid_move_message = None
+        self.invalid_move_time = 0
 
         self.pygame_loop()
 
@@ -53,6 +56,13 @@ class Chess_app:
                 self.draw_board()
                 if self.selected_piece is not None:
                     self.draw_available_moves(self.selected_piece)
+
+            if self.invalid_move_message is not None:
+                current_time = pygame.time.get_ticks()
+                if current_time - self.invalid_move_time < 2000:  # Wyświetlaj komunikat przez 2 sekundy
+                    self.screen.blit(self.invalid_move_message, self.invalid_move_message_rect)
+                else:
+                    self.invalid_move_message = None  # Usuń komunikat po 2 sekundach
 
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -72,7 +82,6 @@ class Chess_app:
                     elif self.quit_rect.collidepoint(x, y):
                         self.running = False
                 else:
-                    # Sprawdź czy kliknięcie myszy następuje w obszarze planszy
                     if self.margin <= x <= self.margin + self.board_size and self.margin <= y <= self.margin + self.board_size:
                         self.row = int((y - self.margin) // (self.board_size / 8))
                         self.col = int((x - self.margin) // (self.board_size / 8))
@@ -80,23 +89,21 @@ class Chess_app:
                             piece = self.chess_board.board[self.row][self.col]
                             if isinstance(piece, Piece):
                                 self.selected_piece = piece
-                                print('selected piece', self.selected_piece)
                         else:
                             start_position = self.selected_piece.position
                             end_position = (self.row, self.col)
-                            if end_position in self.selected_piece.get_available_moves(self.chess_board.board):
+                            available_moves = self.selected_piece.get_available_moves(self.chess_board.board)
+                            if end_position in available_moves:
                                 self.chess_board.move_piece(start_position, end_position)
                                 if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
-                                    self.selected_piece.move()  # Oznacz ruch jako wykonany
-                                    print(
-                                        f"Ruch wykonany przez pionka: {self.selected_piece.__class__.__name__}, "
-                                        f"Kolor: {self.selected_piece.get_color()}, "
-                                        f"ID: {self.selected_piece.id} ",
-                                        {self.selected_piece.move_made})
+                                    self.selected_piece.move()
+                            else:
+                                self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True, (0, 255, 0))
+                                self.invalid_move_message_rect = self.invalid_move_message.get_rect(center=(self.board_size // 2 + self.margin, self.board_size // 3 + self.margin))
+                                self.invalid_move_time = 1000  # Tu ustawiamy czas wyświetlania
                             self.selected_piece = None
-                            # Po wykonaniu ruchu, narysuj dostępne ruchy dla wybranej figury
-                            if isinstance(self.selected_piece, Piece):
-                                self.draw_available_moves(self.selected_piece)
+                        if isinstance(self.selected_piece, Piece):
+                            self.draw_available_moves(self.selected_piece)
 
     def draw_available_moves(self, piece):
         if isinstance(piece, Piece):
