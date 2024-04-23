@@ -72,35 +72,41 @@ class Chess_app:
                     elif self.quit_rect.collidepoint(x, y):
                         self.running = False
                 else:
-                    self.row = int((y - self.margin) // (self.board_size / 8))
-                    self.col = int((x - self.margin) // (self.board_size / 8))
-                    if self.selected_piece is None:
-                        self.selected_piece = self.chess_board.board[self.row][self.col]
-                        print('selected piece', self.selected_piece)
-                    else:
-                        start_position = self.selected_piece.position
-                        end_position = (self.row, self.col)
-                        self.chess_board.move_piece(start_position, end_position)
-                        if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
-                            self.selected_piece.move()  # Oznacz ruch jako wykonany
-                            print(
-                                f"Ruch wykonany przez pionka: {self.selected_piece.__class__.__name__}, "
-                                f"Kolor: {self.selected_piece.get_color()}, "
-                                f"ID: {self.selected_piece.id} ",
-                                {self.selected_piece.move_made})
-                        self.selected_piece = None
-                        # Po wykonaniu ruchu, narysuj dostępne ruchy dla wybranej figury
-                        if isinstance(self.selected_piece, Piece):
-                            self.draw_available_moves(self.selected_piece)
+                    # Sprawdź czy kliknięcie myszy następuje w obszarze planszy
+                    if self.margin <= x <= self.margin + self.board_size and self.margin <= y <= self.margin + self.board_size:
+                        self.row = int((y - self.margin) // (self.board_size / 8))
+                        self.col = int((x - self.margin) // (self.board_size / 8))
+                        if self.selected_piece is None:
+                            piece = self.chess_board.board[self.row][self.col]
+                            if isinstance(piece, Piece):
+                                self.selected_piece = piece
+                                print('selected piece', self.selected_piece)
+                        else:
+                            start_position = self.selected_piece.position
+                            end_position = (self.row, self.col)
+                            if end_position in self.selected_piece.get_available_moves(self.chess_board.board):
+                                self.chess_board.move_piece(start_position, end_position)
+                                if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
+                                    self.selected_piece.move()  # Oznacz ruch jako wykonany
+                                    print(
+                                        f"Ruch wykonany przez pionka: {self.selected_piece.__class__.__name__}, "
+                                        f"Kolor: {self.selected_piece.get_color()}, "
+                                        f"ID: {self.selected_piece.id} ",
+                                        {self.selected_piece.move_made})
+                            self.selected_piece = None
+                            # Po wykonaniu ruchu, narysuj dostępne ruchy dla wybranej figury
+                            if isinstance(self.selected_piece, Piece):
+                                self.draw_available_moves(self.selected_piece)
 
     def draw_available_moves(self, piece):
-        available_moves = piece.get_available_moves(self.chess_board.board)
-        for move in available_moves:
-            r, c = move
-            pygame.draw.rect(self.screen, (0, 255, 0), (
-                self.margin + c * self.board_size / 8, self.margin + r * self.board_size / 8,
-                self.board_size / 8,
-                self.board_size / 8), 3)
+        if isinstance(piece, Piece):
+            available_moves = piece.get_available_moves(self.chess_board.board)
+            for move in available_moves:
+                r, c = move
+                pygame.draw.rect(self.screen, (0, 255, 0), (
+                    self.margin + c * self.board_size / 8, self.margin + r * self.board_size / 8,
+                    self.board_size / 8,
+                    self.board_size / 8), 3)
 
     def draw_board(self):
         for row in range(8):

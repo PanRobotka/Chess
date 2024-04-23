@@ -37,7 +37,6 @@ class Pawn(Piece):
     def __init__(self, color, id):
         super().__init__(color, id)
         self.direction = -1 if color == 'white' else 1
-        # self.starting_row = 1 if color == 'black' else 6
         self.move_made = False
 
     def get_available_moves(self, board):
@@ -56,7 +55,9 @@ class Pawn(Piece):
             if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
                 available_moves.append((current_row + self.direction, current_col))
 
-        return available_moves
+        # Dodajemy warunek sprawdzający czy pionek porusza się w dobrym kierunku
+        return [(row, col) for row, col in available_moves if (row - current_row) / abs(row - current_row) == self.direction]
+
 
     def move(self):
         self.move_made = True
