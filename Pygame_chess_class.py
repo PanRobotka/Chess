@@ -43,6 +43,19 @@ class Chess_app:
 
         self.pygame_loop()
 
+    def draw_message_box(self, message, rect):
+        # Dodanie marginesu
+        margin = 30
+        inner_rect = rect.inflate(margin, margin)
+
+        # Rysowanie tła i ramki z uwzględnieniem marginesu
+        pygame.draw.rect(self.screen, (255, 255, 255), inner_rect)  # Białe tło
+        pygame.draw.rect(self.screen, (0, 0, 0), inner_rect, 2)  # Czarna ramka
+
+        # Wyśrodkowanie tekstu wewnątrz prostokąta z uwzględnieniem marginesu
+        text_rect = message.get_rect(center=inner_rect.center)
+        self.screen.blit(message, text_rect)
+
     def pygame_loop(self):
         while self.running:
             self.screen.fill(self.gray)
@@ -59,10 +72,10 @@ class Chess_app:
 
             if self.invalid_move_message is not None:
                 current_time = pygame.time.get_ticks()
-                if current_time - self.invalid_move_time < 2000:  # Wyświetlaj komunikat przez 2 sekundy
-                    self.screen.blit(self.invalid_move_message, self.invalid_move_message_rect)
+                if current_time - self.invalid_move_time < 1500:  # Wyświetlaj komunikat przez 1.5 sekundy
+                    self.draw_message_box(self.invalid_move_message, self.invalid_move_message_rect)
                 else:
-                    self.invalid_move_message = None  # Usuń komunikat po 2 sekundach
+                    self.invalid_move_message = None  # Usuń komunikat po określonym czasie
 
             pygame.display.flip()
             self.clock.tick(self.fps)
@@ -98,9 +111,9 @@ class Chess_app:
                                 if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
                                     self.selected_piece.move()
                             else:
-                                self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True, (0, 255, 0))
+                                self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True, (255, 0, 0))
                                 self.invalid_move_message_rect = self.invalid_move_message.get_rect(center=(self.board_size // 2 + self.margin, self.board_size // 3 + self.margin))
-                                self.invalid_move_time = 1000  # Tu ustawiamy czas wyświetlania
+                                self.invalid_move_time = pygame.time.get_ticks()
                             self.selected_piece = None
                         if isinstance(self.selected_piece, Piece):
                             self.draw_available_moves(self.selected_piece)
