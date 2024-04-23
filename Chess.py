@@ -31,7 +31,6 @@ class Piece:
             # Usuń zbitą figurę z planszy
             board[position[0]][position[1]] = '.'
 
-
 # Pionek
 class Pawn(Piece):
     def __init__(self, color, id):
@@ -72,11 +71,15 @@ class Pawn(Piece):
         if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
             subsequent_moves.append((current_row + self.direction, current_col))
         # Sprawdź możliwość zbijania pionka przeciwnika w lewo
-        if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
-            subsequent_moves.append((current_row + self.direction, current_col - 1))
+        if current_col > 0:
+            target_piece = board[current_row + self.direction][current_col - 1]
+            if target_piece != '.' and target_piece.color != self.color:
+                subsequent_moves.append((current_row + self.direction, current_col - 1))
         # Sprawdź możliwość zbijania pionka przeciwnika w prawo
-        if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
-            subsequent_moves.append((current_row + self.direction, current_col + 1))
+        if current_col < 7:
+            target_piece = board[current_row + self.direction][current_col + 1]
+            if target_piece != '.' and target_piece.color != self.color:
+                subsequent_moves.append((current_row + self.direction, current_col + 1))
         return subsequent_moves
 
     def move(self):
@@ -89,7 +92,51 @@ class Rook(Piece):
         super().__init__(color, id)
 
     def get_available_moves(self, board):
-        pass
+        available_moves = []
+
+        # Sprawdź ruchy w kierunku pionowym
+        for i in range(self.position[0] + 1, 8):
+            if board[i][self.position[1]] in ['.', self.color]:
+                available_moves.append((i, self.position[1]))
+                if board[i][self.position[1]] == self.color:
+                    break
+            else:
+                if board[i][self.position[1]].color != self.color:  # Jeśli pole zajęte przez przeciwną figurę
+                    available_moves.append((i, self.position[1]))
+                break
+
+        for i in range(self.position[0] - 1, -1, -1):
+            if board[i][self.position[1]] in ['.', self.color]:
+                available_moves.append((i, self.position[1]))
+                if board[i][self.position[1]] == self.color:
+                    break
+            else:
+                if board[i][self.position[1]].color != self.color:
+                    available_moves.append((i, self.position[1]))
+                break
+
+        # Sprawdź ruchy w kierunku poziomym
+        for j in range(self.position[1] + 1, 8):
+            if board[self.position[0]][j] in ['.', self.color]:
+                available_moves.append((self.position[0], j))
+                if board[self.position[0]][j] == self.color:
+                    break
+            else:
+                if board[self.position[0]][j].color != self.color:
+                    available_moves.append((self.position[0], j))
+                break
+
+        for j in range(self.position[1] - 1, -1, -1):
+            if board[self.position[0]][j] in ['.', self.color]:
+                available_moves.append((self.position[0], j))
+                if board[self.position[0]][j] == self.color:
+                    break
+            else:
+                if board[self.position[0]][j].color != self.color:
+                    available_moves.append((self.position[0], j))
+                break
+
+        return available_moves
 
 
 # Koń
@@ -98,7 +145,16 @@ class Horse(Piece):
         super().__init__(color, id)
 
     def get_available_moves(self, board):
-        pass
+        available_moves = []
+        directions = [(1, 2), (1, -2), (-1, 2), (-1, -2), (2, 1), (2, -1), (-2, 1), (-2, -1)]
+        for direction in directions:
+            new_row = self.position[0] + direction[0]
+            new_col = self.position[1] + direction[1]
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target_piece = board[new_row][new_col]
+                if target_piece == '.' or target_piece.color != self.color:
+                    available_moves.append((new_row, new_col))
+        return available_moves
 
 
 # Goniec
@@ -107,7 +163,53 @@ class Bishop(Piece):
         super().__init__(color, id)
 
     def get_available_moves(self, board):
-        pass
+        available_moves = []
+
+        # Sprawdź przekątną w prawo-górę
+        for i, j in zip(range(self.position[0] - 1, -1, -1), range(self.position[1] + 1, 8)):
+            if board[i][j] in ['.', self.color]:
+                available_moves.append((i, j))
+                if board[i][j] == self.color:
+                    break
+            else:
+                if board[i][j].color != self.color:
+                    available_moves.append((i, j))
+                break
+
+        # Sprawdź przekątną w lewo-górę
+        for i, j in zip(range(self.position[0] - 1, -1, -1), range(self.position[1] - 1, -1, -1)):
+            if board[i][j] in ['.', self.color]:
+                available_moves.append((i, j))
+                if board[i][j] == self.color:
+                    break
+            else:
+                if board[i][j].color != self.color:
+                    available_moves.append((i, j))
+                break
+
+        # Sprawdź przekątną w prawo-dół
+        for i, j in zip(range(self.position[0] + 1, 8), range(self.position[1] + 1, 8)):
+            if board[i][j] in ['.', self.color]:
+                available_moves.append((i, j))
+                if board[i][j] == self.color:
+                    break
+            else:
+                if board[i][j].color != self.color:
+                    available_moves.append((i, j))
+                break
+
+        # Sprawdź przekątną w lewo-dół
+        for i, j in zip(range(self.position[0] + 1, 8), range(self.position[1] - 1, -1, -1)):
+            if board[i][j] in ['.', self.color]:
+                available_moves.append((i, j))
+                if board[i][j] == self.color:
+                    break
+            else:
+                if board[i][j].color != self.color:
+                    available_moves.append((i, j))
+                break
+
+        return available_moves
 
 
 # Królowa
@@ -116,7 +218,9 @@ class Queen(Piece):
         super().__init__(color, id)
 
     def get_available_moves(self, board):
-        pass
+        rook_moves = Rook.get_available_moves(self, board)
+        bishop_moves = Bishop.get_available_moves(self,board)
+        return rook_moves + bishop_moves
 
 
 # Król
@@ -125,7 +229,16 @@ class King(Piece):
         super().__init__(color, id)
 
     def get_available_moves(self, board):
-        pass
+        available_moves = []
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+        for direction in directions:
+            new_row = self.position[0] + direction[0]
+            new_col = self.position[1] + direction[1]
+            if 0 <= new_row < 8 and 0 <= new_col < 8:
+                target_piece = board[new_row][new_col]
+                if target_piece == '.' or target_piece.color != self.color:
+                    available_moves.append((new_row, new_col))
+        return available_moves
 
 
 class ChessBoard:
@@ -196,32 +309,3 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
-
-# Utwórz instancję szachownicy
-# chess_board = ChessBoard()
-
-# Wyświetl planszę przed ruchem
-# print("Plansza przed ruchem:")
-# chess_board.display()
-# wyświetl pozycję każdego pionka na planszy
-# chess_board.print_piece_positions()
-# w taki sposób odwołujesz się do nowo stworzonych instancji. Poniżej przykładowy kod gdzie szukasz informacji o figurze położonej na współrzędnych 0,0
-# piece_at_0_0 = chess_board.board[0][0]
-# print(piece_at_0_0)
-########################################################################################################################
-# Kod nie używany, ale działa ;)
-########################################################################################################################
-###### TESTUJE TUTAJ ZBIJANIE PIONKA NA PODSTAWIE WEJŚCIU W NIEGO ORAZ SPRAWDZAM CZY RUCH ZOSTAŁ Z AKTUALIZOWANY ###### !!!!!!!!! WAŻNE
-# Wykonaj ruch pionka z pozycji (6, 0) do (1, 0)
-# start_position = (6, 0)
-# end_position = (1, 0)
-# chess_board.move_piece(start_position, end_position)
-# Wyświetl planszę po ruchu
-# print("\nPlansza po ruchu:")
-# chess_board.display()
-# start_position = (1, 0)
-# end_position = (2, 0)
-# chess_board.move_piece(start_position, end_position)
-# print("\nPlansza po ruchu:")
-# chess_board.display()
-# chess_board.print_piece_positions()
