@@ -31,7 +31,6 @@ class Piece:
             # Usuń zbitą figurę z planszy
             board[position[0]][position[1]] = '.'
 
-
 # Pionek
 class Pawn(Piece):
     def __init__(self, color, id):
@@ -220,7 +219,7 @@ class Queen(Piece):
 
     def get_available_moves(self, board):
         rook_moves = Rook.get_available_moves(self, board)
-        bishop_moves = Bishop.get_available_moves(self, board)
+        bishop_moves = Bishop.get_available_moves(self,board)
         return rook_moves + bishop_moves
 
 
