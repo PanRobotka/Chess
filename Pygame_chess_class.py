@@ -77,6 +77,22 @@ class Chess_app:
                 else:
                     self.invalid_move_message = None  # Usuń komunikat po określonym czasie
 
+            # Sprawdzanie stanu gry po wykonaniu każdego ruchu
+            if self.game_started:
+                # Sprawdź, czy król został zbity
+                if self.chess_board.is_king_dead('white'):
+                    self.draw_message_box(self.font.render("Koniec gry! Król biały został zbity.", True, self.black),
+                                          pygame.Rect(0, 0, self.board_size, self.board_size))
+                    pygame.display.flip()
+                    pygame.time.wait(3000)  # Zatrzymaj grę na 3 sekundy przed zakończeniem
+                    self.running = False
+                elif self.chess_board.is_king_dead('black'):
+                    self.draw_message_box(self.font.render("Koniec gry! Król czarny został zbity.", True, self.black),
+                                          pygame.Rect(0, 0, self.board_size, self.board_size))
+                    pygame.display.flip()
+                    pygame.time.wait(3000)  # Zatrzymaj grę na 3 sekundy przed zakończeniem
+                    self.running = False
+
             # Wyświetlenie informacji o aktualnym graczu
             player_text = self.font.render(f"Gracz: {self.current_player.capitalize()}", True, self.black)
             player_rect = player_text.get_rect(
@@ -113,11 +129,19 @@ class Chess_app:
                             end_position = (self.row, self.col)
                             available_moves = self.selected_piece.get_available_moves(self.chess_board.board)
                             if end_position in available_moves:
-                                self.chess_board.move_piece(start_position, end_position)
-                                if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
-                                    self.selected_piece.move()
-                                # Zmiana gracza po poprawnym ruchu
-                                self.current_player = 'black' if self.current_player == 'white' else 'white'
+                                target_piece = self.chess_board.board[self.row][self.col]
+                                if not isinstance(target_piece, Piece) or target_piece.color != self.current_player:
+                                    self.chess_board.move_piece(start_position, end_position)
+                                    if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
+                                        self.selected_piece.move()
+                                    # Zmiana gracza po poprawnym ruchu
+                                    self.current_player = 'black' if self.current_player == 'white' else 'white'
+                                else:
+                                    self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True,
+                                                                                 (255, 0, 0))
+                                    self.invalid_move_message_rect = self.invalid_move_message.get_rect(
+                                        center=(self.board_size // 2 + self.margin, self.board_size // 3 + self.margin))
+                                    self.invalid_move_time = pygame.time.get_ticks()
                             else:
                                 self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True, (255, 0, 0))
                                 self.invalid_move_message_rect = self.invalid_move_message.get_rect(

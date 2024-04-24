@@ -302,6 +302,13 @@ class ChessBoard:
     #                    print(
     #                        f"Utworzono instancję {piece.__class__.__name__} o kolorze {piece.get_color()} z ID {piece.id} na pozycji {piece.get_position()}")
 
+    def is_king_dead(self, color):
+        for row in self.board:
+            for piece in row:
+                if isinstance(piece, King) and piece.color == color:
+                    return False
+        return True
+
     def print_piece_positions(self):
         for i in range(8):
             for j in range(8):
@@ -309,3 +316,4 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
+
