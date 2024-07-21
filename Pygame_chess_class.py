@@ -1,5 +1,5 @@
 import pygame
-from Chess import ChessBoard, Piece, Pawn, King
+from Chess import ChessBoard, Piece, Pawn, King, Queen, Rook, Bishop, Horse
 
 
 class Chess_app:
@@ -56,6 +56,63 @@ class Chess_app:
         text_rect = message.get_rect(center=inner_rect.center)
         self.screen.blit(message, text_rect)
 
+    def promote_pawn(self, position):
+        choices = [Queen, Rook, Bishop, Horse]
+        choice_index = 0
+        promoting = True
+
+        # Obliczamy wymiary okna promocji
+        promo_width = self.board_size // 1.5  # Zwiększamy szerokość okna promocji
+        promo_height = self.board_size // 3
+        promo_x = (self.board_size + 2 * self.margin - promo_width) // 2
+        promo_y = (self.board_size + 2 * self.margin - promo_height) // 2
+
+        while promoting:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    return
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_LEFT:
+                        choice_index = (choice_index - 1) % len(choices)
+                    elif event.key == pygame.K_RIGHT:
+                        choice_index = (choice_index + 1) % len(choices)
+                    elif event.key == pygame.K_RETURN:
+                        self.chess_board.promote_pawn(position, choices[choice_index])
+                        promoting = False
+
+            # Zapisujemy aktualny stan ekranu
+            current_screen = self.screen.copy()
+
+            # Rysujemy białe tło promocji
+            pygame.draw.rect(self.screen, self.white, (promo_x, promo_y, promo_width, promo_height))
+            pygame.draw.rect(self.screen, self.black, (promo_x, promo_y, promo_width, promo_height), 2)
+
+            # Wyświetlamy komunikat
+            message = self.font.render("Wybierz figurę do promocji:", True, self.black)
+            message_rect = message.get_rect(center=(promo_x + promo_width // 2, promo_y + 30))
+            self.screen.blit(message, message_rect)
+
+            # Wyświetlamy opcje do wyboru
+            for i, piece_class in enumerate(choices):
+                piece_text = self.font.render(piece_class.__name__, True, self.black)
+                # Obliczamy pozycję dla każdej opcji
+                x_pos = promo_x + (i + 1) * promo_width // (len(choices) + 1)
+                y_pos = promo_y + promo_height // 2 + 20
+                text_rect = piece_text.get_rect(center=(x_pos, y_pos))
+
+                if i == choice_index:
+                    pygame.draw.rect(self.screen, self.red, text_rect.inflate(20, 20), 2)
+                self.screen.blit(piece_text, text_rect)
+
+            pygame.display.flip()
+            self.clock.tick(self.fps)
+
+        # Po zakończeniu promocji, przywracamy oryginalny stan ekranu
+        self.screen.blit(current_screen, (0, 0))
+        self.draw_board()  # Odświeżamy planszę, aby pokazać nową figurę
+        pygame.display.flip()
+
     def pygame_loop(self):
         while self.running:
             self.screen.fill(self.gray)
@@ -105,6 +162,7 @@ class Chess_app:
         # Zamknięcie Pygame
         pygame.quit()
 
+
     def event_checker(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -134,6 +192,11 @@ class Chess_app:
                                     self.chess_board.move_piece(start_position, end_position)
                                     if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
                                         self.selected_piece.move()
+
+                                    # Sprawdzenie promocji pionka
+                                    if isinstance(self.selected_piece, Pawn) and self.selected_piece.can_promote():
+                                        self.promote_pawn(end_position)
+
                                     # Zmiana gracza po poprawnym ruchu
                                     self.current_player = 'black' if self.current_player == 'white' else 'white'
                                 else:
@@ -150,6 +213,7 @@ class Chess_app:
                             self.selected_piece = None
                         if isinstance(self.selected_piece, Piece):
                             self.draw_available_moves(self.selected_piece)
+
 
     def draw_available_moves(self, piece):
         if isinstance(piece, Piece):

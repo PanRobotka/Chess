@@ -31,12 +31,17 @@ class Piece:
             # Usuń zbitą figurę z planszy
             board[position[0]][position[1]] = '.'
 
+
 # Pionek
 class Pawn(Piece):
     def __init__(self, color, id):
         super().__init__(color, id)
         self.direction = -1 if color == 'white' else 1
         self.move_made = False
+
+        # Sprawdź czy pionek może awansować do promocji
+    def can_promote(self):
+        return (self.color == 'white' and self.position[0] == 0) or (self.color == 'black' and self.position[0] == 7)
 
     def get_available_moves(self, board):
         available_moves = []
@@ -219,7 +224,7 @@ class Queen(Piece):
 
     def get_available_moves(self, board):
         rook_moves = Rook.get_available_moves(self, board)
-        bishop_moves = Bishop.get_available_moves(self,board)
+        bishop_moves = Bishop.get_available_moves(self, board)
         return rook_moves + bishop_moves
 
 
@@ -258,6 +263,16 @@ class ChessBoard:
     def display(self):
         for row in self.board:
             print(" ".join(str(piece) for piece in row))
+
+    def promote_pawn(self, position, new_piece_class):
+        pawn = self.board[position[0]][position[1]]
+        if isinstance(pawn, Pawn) and pawn.can_promote():
+            color = pawn.color
+            new_piece = new_piece_class(color, f"{color[0].upper()}{new_piece_class.__name__[0]}")
+            new_piece.set_position(position)
+            self.board[position[0]][position[1]] = new_piece
+            return True
+        return False
 
     def move_piece(self, start_pos, end_pos):
         # print('move piece')
@@ -316,4 +331,3 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
-
