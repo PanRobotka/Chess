@@ -331,3 +331,4 @@ class ChessBoard:
                 if isinstance(piece, Piece):
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
+

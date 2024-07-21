@@ -1,5 +1,6 @@
 import pygame
 from Chess import ChessBoard, Piece, Pawn, King, Queen, Rook, Bishop, Horse
+from ai_player import AIPlayer
 
 
 class Chess_app:
@@ -9,8 +10,8 @@ class Chess_app:
 
         pygame.init()
         pygame.display.set_caption("Szachy")
-        self.font = pygame.font.SysFont(None, 40)  # Wybierz odpowiedni rozmiar czcionki
-        self.piece_font = pygame.font.SysFont(None, 60)  # Wybierz odpowiedni rozmiar czcionki dla figur
+        self.font = pygame.font.SysFont(None, 40)
+        self.piece_font = pygame.font.SysFont(None, 60)
 
         width, height = self.board_size + 2 * self.margin, self.board_size + 2 * self.margin
         window_size = (width, height)
@@ -18,7 +19,6 @@ class Chess_app:
         self.clock = pygame.time.Clock()
 
         self.screen = pygame.display.set_mode(window_size)
-        # kolory
         self.white = (255, 255, 255)
         self.black = (0, 0, 0)
         self.gray = (200, 200, 200)
@@ -30,16 +30,17 @@ class Chess_app:
         self.quit_text = self.font.render("Quit Game", True, self.black)
         self.quit_rect = self.quit_text.get_rect(center=(width // 2, height // 2))
 
-        self.selected_piece = None  # Przechowaj informacje o wybranym pionku
+        self.selected_piece = None
         self.running = True
         self.game_started = False
         self.should_capture_mouse = False
 
-        self.current_player = 'white'  # Ustaw aktualnego gracza jako białego na początku gry
+        self.current_player = 'white'
         self.chess_board = ChessBoard()
-        # Zmienne do obsługi wyświetlania tekstu
         self.invalid_move_message = None
         self.invalid_move_time = 0
+
+        self.ai_player = AIPlayer('black')
 
         self.pygame_loop()
 
@@ -61,8 +62,7 @@ class Chess_app:
         choice_index = 0
         promoting = True
 
-        # Obliczamy wymiary okna promocji
-        promo_width = self.board_size // 1.5  # Zwiększamy szerokość okna promocji
+        promo_width = self.board_size // 1.5
         promo_height = self.board_size // 3
         promo_x = (self.board_size + 2 * self.margin - promo_width) // 2
         promo_y = (self.board_size + 2 * self.margin - promo_height) // 2
@@ -81,22 +81,17 @@ class Chess_app:
                         self.chess_board.promote_pawn(position, choices[choice_index])
                         promoting = False
 
-            # Zapisujemy aktualny stan ekranu
             current_screen = self.screen.copy()
 
-            # Rysujemy białe tło promocji
             pygame.draw.rect(self.screen, self.white, (promo_x, promo_y, promo_width, promo_height))
             pygame.draw.rect(self.screen, self.black, (promo_x, promo_y, promo_width, promo_height), 2)
 
-            # Wyświetlamy komunikat
             message = self.font.render("Wybierz figurę do promocji:", True, self.black)
             message_rect = message.get_rect(center=(promo_x + promo_width // 2, promo_y + 30))
             self.screen.blit(message, message_rect)
 
-            # Wyświetlamy opcje do wyboru
             for i, piece_class in enumerate(choices):
                 piece_text = self.font.render(piece_class.__name__, True, self.black)
-                # Obliczamy pozycję dla każdej opcji
                 x_pos = promo_x + (i + 1) * promo_width // (len(choices) + 1)
                 y_pos = promo_y + promo_height // 2 + 20
                 text_rect = piece_text.get_rect(center=(x_pos, y_pos))
@@ -108,9 +103,8 @@ class Chess_app:
             pygame.display.flip()
             self.clock.tick(self.fps)
 
-        # Po zakończeniu promocji, przywracamy oryginalny stan ekranu
         self.screen.blit(current_screen, (0, 0))
-        self.draw_board()  # Odświeżamy planszę, aby pokazać nową figurę
+        self.draw_board()
         pygame.display.flip()
 
     def pygame_loop(self):
@@ -129,28 +123,28 @@ class Chess_app:
 
             if self.invalid_move_message is not None:
                 current_time = pygame.time.get_ticks()
-                if current_time - self.invalid_move_time < 1500:  # Wyświetlaj komunikat przez 1.5 sekundy
+                if current_time - self.invalid_move_time < 1500:
                     self.draw_message_box(self.invalid_move_message, self.invalid_move_message_rect)
                 else:
-                    self.invalid_move_message = None  # Usuń komunikat po określonym czasie
+                    self.invalid_move_message = None
 
-            # Sprawdzanie stanu gry po wykonaniu każdego ruchu
             if self.game_started:
-                # Sprawdź, czy król został zbity
                 if self.chess_board.is_king_dead('white'):
                     self.draw_message_box(self.font.render("Koniec gry! Król biały został zbity.", True, self.black),
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
-                    pygame.time.wait(3000)  # Zatrzymaj grę na 3 sekundy przed zakończeniem
+                    pygame.time.wait(3000)
                     self.running = False
                 elif self.chess_board.is_king_dead('black'):
                     self.draw_message_box(self.font.render("Koniec gry! Król czarny został zbity.", True, self.black),
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
-                    pygame.time.wait(3000)  # Zatrzymaj grę na 3 sekundy przed zakończeniem
+                    pygame.time.wait(3000)
                     self.running = False
 
-            # Wyświetlenie informacji o aktualnym graczu
+                if self.current_player == 'black':
+                    self.ai_move()
+
             player_text = self.font.render(f"Gracz: {self.current_player.capitalize()}", True, self.black)
             player_rect = player_text.get_rect(
                 center=(self.board_size // 2 + self.margin, self.board_size + 3 * self.margin // 2))
@@ -159,9 +153,19 @@ class Chess_app:
             pygame.display.flip()
             self.clock.tick(self.fps)
 
-        # Zamknięcie Pygame
         pygame.quit()
 
+    def ai_move(self):
+        move = self.ai_player.choose_move(self.chess_board)
+        if move:
+            start_pos, end_pos = move
+            piece = self.chess_board.board[start_pos[0]][start_pos[1]]
+            self.chess_board.move_piece(start_pos, end_pos)
+
+            if isinstance(piece, Pawn) and piece.can_promote():
+                self.chess_board.promote_pawn(end_pos, Queen)
+
+            self.current_player = 'white'
 
     def event_checker(self):
         for event in pygame.event.get():
@@ -180,7 +184,8 @@ class Chess_app:
                         self.col = int((x - self.margin) // (self.board_size / 8))
                         if self.selected_piece is None:
                             piece = self.chess_board.board[self.row][self.col]
-                            if isinstance(piece, Piece) and piece.color == self.current_player:
+                            if isinstance(piece,
+                                          Piece) and piece.color == self.current_player and self.current_player == 'white':
                                 self.selected_piece = piece
                         else:
                             start_position = self.selected_piece.position
@@ -193,12 +198,10 @@ class Chess_app:
                                     if isinstance(self.selected_piece, Pawn) and not self.selected_piece.move_made:
                                         self.selected_piece.move()
 
-                                    # Sprawdzenie promocji pionka
                                     if isinstance(self.selected_piece, Pawn) and self.selected_piece.can_promote():
                                         self.promote_pawn(end_position)
 
-                                    # Zmiana gracza po poprawnym ruchu
-                                    self.current_player = 'black' if self.current_player == 'white' else 'white'
+                                    self.current_player = 'black'
                                 else:
                                     self.invalid_move_message = self.font.render("Nieprawidłowy ruch", True,
                                                                                  (255, 0, 0))
@@ -213,7 +216,6 @@ class Chess_app:
                             self.selected_piece = None
                         if isinstance(self.selected_piece, Piece):
                             self.draw_available_moves(self.selected_piece)
-
 
     def draw_available_moves(self, piece):
         if isinstance(piece, Piece):
