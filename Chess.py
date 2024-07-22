@@ -53,22 +53,26 @@ class Pawn(Piece):
         else:
             available_moves += self.check_subsequent_moves(board, current_row, current_col)
 
-        # Dodajemy warunek sprawdzający czy pionek porusza się w dobrym kierunku
+        # Filtrujemy ruchy, które są w prawidłowym kierunku
         return [(row, col) for row, col in available_moves if
-                (row - current_row) / abs(row - current_row) == self.direction]
+                (row - current_row) * self.direction > 0]  # Zmiana tutaj
 
     def check_initial_moves(self, board, current_row, current_col):
         initial_moves = []
         if 0 <= current_row + self.direction < 8 and board[current_row + self.direction][current_col] == '.':
             initial_moves.append((current_row + self.direction, current_col))
-            if board[current_row + 2 * self.direction][current_col] == '.':
+            if 0 <= current_row + 2 * self.direction < 8 and board[current_row + 2 * self.direction][current_col] == '.':
                 initial_moves.append((current_row + 2 * self.direction, current_col))
         # Sprawdź możliwość zbijania pionka przeciwnika w lewo
-        if current_col > 0 and board[current_row + self.direction][current_col - 1] not in ['.', self.color]:
-            initial_moves.append((current_row + self.direction, current_col - 1))
+        if current_col > 0 and 0 <= current_row + self.direction < 8:
+            target_piece = board[current_row + self.direction][current_col - 1]
+            if isinstance(target_piece, Piece) and target_piece.color != self.color:
+                initial_moves.append((current_row + self.direction, current_col - 1))
         # Sprawdź możliwość zbijania pionka przeciwnika w prawo
-        if current_col < 7 and board[current_row + self.direction][current_col + 1] not in ['.', self.color]:
-            initial_moves.append((current_row + self.direction, current_col + 1))
+        if current_col < 7 and 0 <= current_row + self.direction < 8:
+            target_piece = board[current_row + self.direction][current_col + 1]
+            if isinstance(target_piece, Piece) and target_piece.color != self.color:
+                initial_moves.append((current_row + self.direction, current_col + 1))
         return initial_moves
 
     def check_subsequent_moves(self, board, current_row, current_col):
@@ -332,3 +336,27 @@ class ChessBoard:
                     print(
                         f"Figura {piece.__class__.__name__} o kolorze {piece.get_color()} jest na pozycji {piece.get_position()}")
 
+    def move_piece_ai(self, start_pos, end_pos):
+        start_row, start_col = start_pos
+        end_row, end_col = end_pos
+        captured_piece = self.board[end_row][end_col]
+        piece = self.board[start_row][start_col]
+
+        self.board[start_row][start_col] = '.'
+        self.board[end_row][end_col] = piece
+        piece.set_position((end_row, end_col))
+
+        if not hasattr(self, 'move_history'):
+            self.move_history = []
+        self.move_history.append((start_pos, end_pos, captured_piece))
+
+        return captured_piece
+
+    def undo_move(self):
+        if hasattr(self, 'move_history') and self.move_history:
+            last_move = self.move_history.pop()
+            start_pos, end_pos, captured_piece = last_move
+            moving_piece = self.board[end_pos[0]][end_pos[1]]
+            self.board[start_pos[0]][start_pos[1]] = moving_piece
+            self.board[end_pos[0]][end_pos[1]] = captured_piece
+            moving_piece.set_position(start_pos)

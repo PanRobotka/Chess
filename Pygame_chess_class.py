@@ -130,12 +130,14 @@ class Chess_app:
 
             if self.game_started:
                 if self.chess_board.is_king_dead('white'):
+                    self.ai_player.end_game()
                     self.draw_message_box(self.font.render("Koniec gry! Król biały został zbity.", True, self.black),
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
                     pygame.time.wait(3000)
                     self.running = False
                 elif self.chess_board.is_king_dead('black'):
+                    self.ai_player.end_game()
                     self.draw_message_box(self.font.render("Koniec gry! Król czarny został zbity.", True, self.black),
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
