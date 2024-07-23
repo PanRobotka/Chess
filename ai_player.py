@@ -1,10 +1,8 @@
 import math
 import random
-from Chess import Piece
-from Chess import ChessBoard, Piece, Pawn, King, Queen, Rook, Bishop, Horse
-
 import json
 import os
+from Chess import Piece, ChessBoard, Pawn, King, Queen, Rook, Bishop, Horse
 
 
 class GameHistory:
@@ -77,10 +75,7 @@ class GameHistory:
                     move_evaluations[move_key].append(
                         self._get_move_evaluation(game, move['move_number'], move['player']))
 
-        # Calculate average evaluation for each move
         move_averages = {move: sum(evals) / len(evals) for move, evals in move_evaluations.items()}
-
-        # Sort by the most frequent moves and then by the best average evaluation
         sorted_moves = sorted(move_counts.items(), key=lambda x: (x[1], move_averages.get(x[0], 0)), reverse=True)
         return sorted_moves
 
@@ -118,15 +113,12 @@ class AIPlayer:
         if common_moves and random.random() < 0.2:  # 20% szans na wybranie ruchu z historii
             best_move = common_moves[0][0]
         else:
-            # Jeśli nie wybrano ruchu z historii, użyj algorytmu Minimax
             best_move = self.minimax_choose_move(chess_board)
 
-        # Ocena pozycji po wykonaniu ruchu
         chess_board.move_piece_ai(best_move[0], best_move[1])
         evaluation = self.evaluate_board(chess_board)
         chess_board.undo_move()
 
-        # Zapisz wykonany ruch wraz z oceną
         self.current_game_moves.append({
             'board_state': board_state,
             'start': best_move[0],
@@ -139,41 +131,21 @@ class AIPlayer:
     def end_game(self):
         self.game_history.add_game(self.current_game_moves)
         self.current_game_moves = []
-        self.game_history.print_game_history()  # Dodaj tę linię, aby wyświetlić historię gry po jej zakończeniu
+        self.game_history.print_game_history()
         print("Gra zakończona i zapisana w historii")
 
     def get_board_state(self, chess_board):
         return str([[str(piece) for piece in row] for row in chess_board.board])
 
-    def get_advanced_move_suggestions(self, board_state):
-        move_counts = {}
-        move_evaluations = {}
-
-        for game in self.history:
-            for move in game['moves']:
-                if move['board_state'] == board_state:
-                    move_key = (tuple(move['from']), tuple(move['to']))
-                    move_counts[move_key] = move_counts.get(move_key, 0) + 1
-                    if move_key not in move_evaluations:
-                        move_evaluations[move_key] = []
-                    move_evaluations[move_key].append(
-                        self._get_move_evaluation(game, move['move_number'], move['player']))
-
-        # Calculate average evaluation for each move
-        move_averages = {move: sum(evals) / len(evals) for move, evals in move_evaluations.items()}
-
-        # Sort by the most frequent moves and then by the best average evaluation
-        sorted_moves = sorted(move_counts.items(), key=lambda x: (x[1], move_averages.get(x[0], 0)), reverse=True)
-        return sorted_moves
-
     def minimax_choose_move(self, chess_board):
         best_score = -math.inf
         best_move = None
         all_moves = self._get_all_moves(chess_board)
+        max_depth = self.dynamic_depth(chess_board)
 
         for move in all_moves:
             chess_board.move_piece_ai(move[0], move[1])
-            score = self.minimax(chess_board, self.MAX_DEPTH, -math.inf, math.inf, False)
+            score = self.minimax(chess_board, max_depth, -math.inf, math.inf, False)
             chess_board.undo_move()
             if score > best_score:
                 best_score = score
@@ -208,11 +180,18 @@ class AIPlayer:
                     break
             return min_eval
 
+    def dynamic_depth(self, chess_board):
+        num_pieces = sum(isinstance(piece, Piece) for row in chess_board.board for piece in row)
+        if num_pieces > 20:
+            return 3  # Early game
+        elif num_pieces > 10:
+            return 4  # Middle game
+        else:
+            return 5  # End game
+
     def evaluate_board(self, chess_board):
         score = 0
         piece_values = {'pawn': 1, 'horse': 3, 'bishop': 3, 'rook': 5, 'queen': 9, 'king': 0}
-        control_center = 0
-        king_safety = 0
 
         for row in range(8):
             for col in range(8):
@@ -224,51 +203,45 @@ class AIPlayer:
                     else:
                         score -= value
 
-        # Dodajemy bonus za kontrolowanie centrum planszy
-        center_squares = [(3, 3), (3, 4), (4, 3), (4, 4)]
-        for row, col in center_squares:
-            if isinstance(chess_board.board[row][col], Piece):
-                if chess_board.board[row][col].color == self.color:
-                    control_center += 0.5
-                else:
-                    control_center -= 0.5
-        score += control_center
-
-        # Ocena bezpieczeństwa króla
-        king_position = self.find_king_position(chess_board)
-        if king_position:
-            king_row, king_col = king_position
-            safety_score = self.evaluate_king_safety(king_row, king_col, chess_board)
-            king_safety += safety_score
-        score += king_safety
+        # Additional evaluation metrics
+        score += self.evaluate_mobility(chess_board)
+        score += self.evaluate_control_center(chess_board)
+        score += self.evaluate_king_safety(chess_board)
 
         return score
 
-    def find_king_position(self, chess_board):
+    def evaluate_mobility(self, chess_board):
+        mobility_score = 0
+        for row in range(8):
+            for col in range(8):
+                piece = chess_board.board[row][col]
+                if isinstance(piece, Piece) and piece.color == self.color:
+                    piece_moves = piece.get_available_moves(chess_board.board)
+                    mobility_score += len(piece_moves)
+        return mobility_score
+
+    def evaluate_control_center(self, chess_board):
+        center_pieces = [(3, 3), (3, 4), (4, 3), (4, 4)]
+        control_center_score = 0
+        for row, col in center_pieces:
+            piece = chess_board.board[row][col]
+            if isinstance(piece, Piece):
+                if piece.color == self.color:
+                    control_center_score += 1
+                else:
+                    control_center_score -= 1
+        return control_center_score
+
+    def evaluate_king_safety(self, chess_board):
+        king_safety_score = 0
         for row in range(8):
             for col in range(8):
                 piece = chess_board.board[row][col]
                 if isinstance(piece, King) and piece.color == self.color:
-                    return (row, col)
-        return None
-
-    def evaluate_king_safety(self, row, col, chess_board):
-        # Przykładowa funkcja oceniająca bezpieczeństwo króla (można rozbudować)
-        threats = 0
-        for r in range(max(0, row - 1), min(8, row + 2)):
-            for c in range(max(0, col - 1), min(8, col + 2)):
-                target_piece = chess_board.board[r][c]
-                if isinstance(target_piece, Piece) and target_piece.color != self.color:
-                    threats += 0.5
-        return -threats
+                    king_safety_score += (4 - abs(3.5 - row) - abs(3.5 - col))
+        return king_safety_score
 
     def _get_all_moves(self, chess_board):
-        """
-        Zbiera wszystkie możliwe ruchy dla aktualnego gracza.
-
-        :param chess_board: Obiekt reprezentujący planszę szachową
-        :return: Lista dostępnych ruchów jako krotki ((start, end))
-        """
         moves = []
         for row in range(8):
             for col in range(8):
@@ -276,60 +249,5 @@ class AIPlayer:
                 if isinstance(piece, Piece) and piece.color == self.color:
                     piece_moves = piece.get_available_moves(chess_board.board)
                     for move in piece_moves:
-                        end_row, end_col = move
-                        # Sprawdzenie, czy ruch zbijający jest możliwy
-                        if isinstance(chess_board.board[end_row][end_col], Piece) and chess_board.board[end_row][
-                            end_col].color != self.color:
-                            moves.append(((row, col), move))
-                        elif chess_board.board[end_row][end_col] == '.':
-                            moves.append(((row, col), move))
+                        moves.append(((row, col), move))
         return moves
-
-    def _evaluate_move(self, move, chess_board):
-        """
-        Ocena ruchu na podstawie prostych heurystyk.
-
-        :param move: Ruch do oceny (krotka ((start, end)))
-        :param chess_board: Obiekt reprezentujący planszę szachową
-        :return: Wartość oceny ruchu
-        """
-        start_pos, end_pos = move
-        start_row, start_col = start_pos
-        end_row, end_col = end_pos
-
-        # Wartość oceny
-        score = 0
-
-        # Pobierz pionka, który wykonuje ruch
-        piece = chess_board.board[start_row][start_col]
-
-        # Pobierz docelowy pionek
-        target_piece = chess_board.board[end_row][end_col]
-
-        # Ocena na podstawie wartości pionka
-        piece_value = self._get_piece_value(piece)
-        score += piece_value
-
-        # Dodaj wartość za ruch, który zjada przeciwnika
-        if isinstance(target_piece, Piece) and target_piece.color != self.color:
-            target_piece_value = self._get_piece_value(target_piece)
-            score += target_piece_value * 10  # Zwiększamy wagę zbijania przeciwnika
-
-        return score
-
-    def _get_piece_value(self, piece):
-        """
-        Zwraca wartość pionka na podstawie jego typu.
-
-        :param piece: Pionek, którego wartość jest oceniana
-        :return: Wartość pionka
-        """
-        piece_values = {
-            'pawn': 1,
-            'horse': 3,
-            'bishop': 3,
-            'rook': 5,
-            'queen': 9,
-            'king': 15  # Król nie ma przypisanej wartości w tym prostym przykładzie
-        }
-        return piece_values.get(piece.__class__.__name__.lower(), 0)
