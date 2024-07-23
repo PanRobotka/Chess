@@ -135,14 +135,14 @@ class Chess_app:
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
                     pygame.time.wait(3000)
-                    self.running = False
+                    self.reset_game()
                 elif self.chess_board.is_king_dead('black'):
                     self.ai_player.end_game()
                     self.draw_message_box(self.font.render("Koniec gry! Król czarny został zbity.", True, self.black),
                                           pygame.Rect(0, 0, self.board_size, self.board_size))
                     pygame.display.flip()
                     pygame.time.wait(3000)
-                    self.running = False
+                    self.reset_game()
 
                 if self.current_player == 'black':
                     self.ai_move()
@@ -261,6 +261,15 @@ class Chess_app:
                     text = self.piece_font.render(piece.id, True, self.red)
                     self.screen.blit(text, (
                         self.margin + col * self.board_size / 8 + 20, self.margin + row * self.board_size / 8 + 20))
+
+    def reset_game(self):
+        self.chess_board = ChessBoard()
+        self.ai_player = AIPlayer('black')
+        self.current_player = 'white'
+        self.selected_piece = None
+        self.invalid_move_message = None
+        self.invalid_move_time = 0
+        self.game_started = False
 
 
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 import math
 import random
 from Chess import Piece
+from Chess import ChessBoard, Piece, Pawn, King, Queen, Rook, Bishop, Horse
 
 import json
 import os
@@ -62,6 +63,32 @@ class GameHistory:
                     move_counts[move_key] = move_counts.get(move_key, 0) + 1
         return sorted(move_counts.items(), key=lambda x: x[1], reverse=True)
 
+    def get_advanced_move_suggestions(self, board_state):
+        move_counts = {}
+        move_evaluations = {}
+
+        for game in self.history:
+            for move in game['moves']:
+                if move['board_state'] == board_state:
+                    move_key = (tuple(move['from']), tuple(move['to']))
+                    move_counts[move_key] = move_counts.get(move_key, 0) + 1
+                    if move_key not in move_evaluations:
+                        move_evaluations[move_key] = []
+                    move_evaluations[move_key].append(
+                        self._get_move_evaluation(game, move['move_number'], move['player']))
+
+        # Calculate average evaluation for each move
+        move_averages = {move: sum(evals) / len(evals) for move, evals in move_evaluations.items()}
+
+        # Sort by the most frequent moves and then by the best average evaluation
+        sorted_moves = sorted(move_counts.items(), key=lambda x: (x[1], move_averages.get(x[0], 0)), reverse=True)
+        return sorted_moves
+
+    def _get_move_evaluation(self, game, move_number, player):
+        evaluations = [eval['evaluation'] for eval in game['evaluations'] if
+                       eval['move_number'] == move_number and eval['player'] == player]
+        return evaluations[0] if evaluations else 0
+
     def print_game_history(self):
         for i, game in enumerate(self.history):
             print(f"Partia {i + 1}")
@@ -80,7 +107,7 @@ class AIPlayer:
     def __init__(self, color):
         self.color = color
         self.opponent_color = 'black' if color == 'white' else 'white'
-        self.MAX_DEPTH = 2
+        self.MAX_DEPTH = 3
         self.game_history = GameHistory()
         self.current_game_moves = []
 
@@ -88,7 +115,7 @@ class AIPlayer:
         board_state = self.get_board_state(chess_board)
         common_moves = self.game_history.get_most_common_moves(board_state)
 
-        if common_moves and random.random() < 0.3:  # 30% szans na wybranie ruchu z historii
+        if common_moves and random.random() < 0.2:  # 20% szans na wybranie ruchu z historii
             best_move = common_moves[0][0]
         else:
             # Jeśli nie wybrano ruchu z historii, użyj algorytmu Minimax
@@ -118,16 +145,40 @@ class AIPlayer:
     def get_board_state(self, chess_board):
         return str([[str(piece) for piece in row] for row in chess_board.board])
 
+    def get_advanced_move_suggestions(self, board_state):
+        move_counts = {}
+        move_evaluations = {}
+
+        for game in self.history:
+            for move in game['moves']:
+                if move['board_state'] == board_state:
+                    move_key = (tuple(move['from']), tuple(move['to']))
+                    move_counts[move_key] = move_counts.get(move_key, 0) + 1
+                    if move_key not in move_evaluations:
+                        move_evaluations[move_key] = []
+                    move_evaluations[move_key].append(
+                        self._get_move_evaluation(game, move['move_number'], move['player']))
+
+        # Calculate average evaluation for each move
+        move_averages = {move: sum(evals) / len(evals) for move, evals in move_evaluations.items()}
+
+        # Sort by the most frequent moves and then by the best average evaluation
+        sorted_moves = sorted(move_counts.items(), key=lambda x: (x[1], move_averages.get(x[0], 0)), reverse=True)
+        return sorted_moves
+
     def minimax_choose_move(self, chess_board):
         best_score = -math.inf
         best_move = None
-        for move in self._get_all_moves(chess_board):
+        all_moves = self._get_all_moves(chess_board)
+
+        for move in all_moves:
             chess_board.move_piece_ai(move[0], move[1])
             score = self.minimax(chess_board, self.MAX_DEPTH, -math.inf, math.inf, False)
             chess_board.undo_move()
             if score > best_score:
                 best_score = score
                 best_move = move
+
         return best_move
 
     def minimax(self, chess_board, depth, alpha, beta, maximizing_player):
@@ -160,9 +211,12 @@ class AIPlayer:
     def evaluate_board(self, chess_board):
         score = 0
         piece_values = {'pawn': 1, 'horse': 3, 'bishop': 3, 'rook': 5, 'queen': 9, 'king': 0}
+        control_center = 0
+        king_safety = 0
 
-        for row in chess_board.board:
-            for piece in row:
+        for row in range(8):
+            for col in range(8):
+                piece = chess_board.board[row][col]
                 if isinstance(piece, Piece):
                     value = piece_values[piece.__class__.__name__.lower()]
                     if piece.color == self.color:
@@ -170,7 +224,43 @@ class AIPlayer:
                     else:
                         score -= value
 
+        # Dodajemy bonus za kontrolowanie centrum planszy
+        center_squares = [(3, 3), (3, 4), (4, 3), (4, 4)]
+        for row, col in center_squares:
+            if isinstance(chess_board.board[row][col], Piece):
+                if chess_board.board[row][col].color == self.color:
+                    control_center += 0.5
+                else:
+                    control_center -= 0.5
+        score += control_center
+
+        # Ocena bezpieczeństwa króla
+        king_position = self.find_king_position(chess_board)
+        if king_position:
+            king_row, king_col = king_position
+            safety_score = self.evaluate_king_safety(king_row, king_col, chess_board)
+            king_safety += safety_score
+        score += king_safety
+
         return score
+
+    def find_king_position(self, chess_board):
+        for row in range(8):
+            for col in range(8):
+                piece = chess_board.board[row][col]
+                if isinstance(piece, King) and piece.color == self.color:
+                    return (row, col)
+        return None
+
+    def evaluate_king_safety(self, row, col, chess_board):
+        # Przykładowa funkcja oceniająca bezpieczeństwo króla (można rozbudować)
+        threats = 0
+        for r in range(max(0, row - 1), min(8, row + 2)):
+            for c in range(max(0, col - 1), min(8, col + 2)):
+                target_piece = chess_board.board[r][c]
+                if isinstance(target_piece, Piece) and target_piece.color != self.color:
+                    threats += 0.5
+        return -threats
 
     def _get_all_moves(self, chess_board):
         """
