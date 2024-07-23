@@ -25,22 +25,55 @@ class GameHistory:
     def save_history(self):
         try:
             with open(self.filename, 'w') as f:
-                json.dump(self.history, f)
+                json.dump(self.history, f, indent=2)
         except Exception as e:
             print(f"Error saving history: {e}")
 
     def add_game(self, moves):
-        self.history.append(moves)
+        game_data = {
+            "moves": [],
+            "evaluations": []
+        }
+        for i, move in enumerate(moves):
+            player = "white" if i % 2 == 0 else "black"
+            game_data["moves"].append({
+                "move_number": i // 2 + 1,
+                "player": player,
+                "from": move['start'],
+                "to": move['end'],
+                "board_state": move['board_state']
+            })
+            if 'evaluation' in move:
+                game_data["evaluations"].append({
+                    "move_number": i // 2 + 1,
+                    "player": player,
+                    "evaluation": move['evaluation']
+                })
+
+        self.history.append(game_data)
         self.save_history()
 
     def get_most_common_moves(self, board_state):
         move_counts = {}
         for game in self.history:
-            for move in game:
+            for move in game['moves']:
                 if move['board_state'] == board_state:
-                    move_key = (tuple(move['start']), tuple(move['end']))
+                    move_key = (tuple(move['from']), tuple(move['to']))
                     move_counts[move_key] = move_counts.get(move_key, 0) + 1
         return sorted(move_counts.items(), key=lambda x: x[1], reverse=True)
+
+    def print_game_history(self):
+        for i, game in enumerate(self.history):
+            print(f"Partia {i + 1}")
+            for j in range(0, len(game['moves']), 2):
+                white_move = game['moves'][j]
+                black_move = game['moves'][j + 1] if j + 1 < len(game['moves']) else None
+
+                white_str = f"{white_move['move_number']}. {white_move['from']} -> {white_move['to']}"
+                black_str = f"{black_move['from']} -> {black_move['to']}" if black_move else ""
+
+                print(f"{white_str:<30} {black_str}")
+            print("\n")
 
 
 class AIPlayer:
@@ -61,11 +94,17 @@ class AIPlayer:
             # Jeśli nie wybrano ruchu z historii, użyj algorytmu Minimax
             best_move = self.minimax_choose_move(chess_board)
 
-        # Zapisz wykonany ruch
+        # Ocena pozycji po wykonaniu ruchu
+        chess_board.move_piece_ai(best_move[0], best_move[1])
+        evaluation = self.evaluate_board(chess_board)
+        chess_board.undo_move()
+
+        # Zapisz wykonany ruch wraz z oceną
         self.current_game_moves.append({
             'board_state': board_state,
             'start': best_move[0],
-            'end': best_move[1]
+            'end': best_move[1],
+            'evaluation': evaluation
         })
 
         return best_move
@@ -73,6 +112,7 @@ class AIPlayer:
     def end_game(self):
         self.game_history.add_game(self.current_game_moves)
         self.current_game_moves = []
+        self.game_history.print_game_history()  # Dodaj tę linię, aby wyświetlić historię gry po jej zakończeniu
         print("Gra zakończona i zapisana w historii")
 
     def get_board_state(self, chess_board):
